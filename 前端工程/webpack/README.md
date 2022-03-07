@@ -22,3 +22,27 @@
 
 ## 3. 打包加速方法
 
+- devtool 的 sourceMap较为耗时
+- 开发环境不做无意义的操作：代码压缩、目录内容清理、计算文件hash、提取CSS文件等
+- 第三方依赖外链script引入：vue、ui组件、JQuery等
+- HotModuleReplacementPlugin：热更新增量构建
+- DllPlugin& DllReferencePlugin：动态链接库，提高打包效率，仅打包一次第三方模块，每次构建只重新打包业务代码。
+- thread-loader,happypack：多线程编译，加快编译速度
+- noParse：不需要解析某些模块的依赖
+- babel-loader开启缓存cache
+- splitChunks（老版本用CommonsChunkPlugin）：提取公共模块，将符合引用次数(minChunks)的模块打包到一起，利用浏览器缓存
+- Tree Shaking 摇树：基于ES6提供的模块系统对代码进行静态分析, 并在压缩阶段将代码中的死代码（dead code)移除，减少代码体积。
+
+## 4. 打包体积优化
+
+- webpack-bundle-analyzer插件可以可视化的查看webpack打包出来的各个文件体积大小，以便我们定位大文件，进行体积优化
+- 提取第三方库或通过引用外部文件的方式引入第三方库
+- 代码压缩插件UglifyJsPlugin
+- 服务器启用gzip压缩
+- 按需加载资源文件 require.ensure=
+- 剥离css文件，单独打包
+- 去除不必要插件，开发环境与生产环境用不同配置文件
+- SpritesmithPlugin雪碧图，将多个小图片打包成一张，用background-image，backgroud-pisition，width，height控制显示部分
+- url-loader 文件大小小于设置的尺寸变成base-64编码文本，大与尺寸由file-loader拷贝到目标目录
+
+
