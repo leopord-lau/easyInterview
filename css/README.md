@@ -169,4 +169,10 @@ flex-basis： 定义在分配多余空间之前，项目占据的主轴空间（
 ## 14. css动画
 [CSS动画简介](http://www.ruanyifeng.com/blog/2014/02/css_transition_and_animation.html)
 
-## 15.  
+## 15.  display:none、visibility:hidden 和 opacity:0 之间的区别？
+
+这三者都是隐藏，但是具有以下不同点：
+- `display: none` 隐藏后不占位置， `visibility: hidden`、`opacity: 0` 隐藏后占位置、
+- `display: none` 不会被子元素继承，`visibility: hidden`会被子元素继承，通过设置子元素的`visibility: visible`来显示。`opacity: 0`会被子元素继承，但是不能通过设置来重新显示。
+- `display: none` 不会触发绑定事件，元素不会在页面存在，没意义。`visibility: hidden`也不会触发。`opacity: 0`可以触发
+- `transition`只对`opacity`有效
