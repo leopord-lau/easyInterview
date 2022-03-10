@@ -80,67 +80,68 @@
 
 ## 6. css 怎么开启硬件加速(GPU 加速)
 
-浏览器在处理下面的 css 的时候，会使用 GPU 渲染
+浏览器在处理下面的 `css` 的时候，会使用 `GPU` 渲染
 
-- transform（当 3D 变换的样式出现时会使用 GPU 加速）
-- opacity
-- filter
-- will-change
+- `transform`（当 3D 变换的样式出现时会使用 GPU 加速）
+- `opacity`
+- `filter`
+- `will-change`
 
 
-```
-采用 transform: translateZ(0)
-采用 transform: translate3d(0, 0, 0)
-使用 CSS 的 will-change属性。 will-change 可以设置为opacity、transform、top、left、bottom、right。
-```
 
-> 注意！层爆炸，由于某些原因可能导致产生大量不在预期内的合成层，虽然有浏览器的层压缩机制，但是也有很多无法进行压缩的情况，这就可能出现层爆炸的现象（简单理解就是，很多不需要提升为合成层的元素因为某些不当操作成为了合成层）。解决层爆炸的问题，最佳方案是打破 overlap 的条件，也就是说让其他元素不要和合成层元素重叠。简单直接的方式：使用 3D 硬件加速提升动画性能时，最好给元素增加一个 z-index 属性，人为干扰合成的排序，可以有效减少创建不必要的合成层，提升渲染性能，移动端优化效果尤为明显。
+采用 `transform: translateZ(0)`
+采用 `transform: translate3d(0, 0, 0)`
+使用 `CSS` 的 `will-change`属性。 `will-change` 可以设置为`opacity`、`transform`、`top`、`left`、`bottom`、`right`。
+
+
+> 注意！层爆炸，由于某些原因可能导致产生大量不在预期内的合成层，虽然有浏览器的层压缩机制，但是也有很多无法进行压缩的情况，这就可能出现层爆炸的现象（简单理解就是，很多不需要提升为合成层的元素因为某些不当操作成为了合成层）。解决层爆炸的问题，最佳方案是打破 `overlap` 的条件，也就是说让其他元素不要和合成层元素重叠。简单直接的方式：使用 3D 硬件加速提升动画性能时，最好给元素增加一个 `z-index` 属性，人为干扰合成的排序，可以有效减少创建不必要的合成层，提升渲染性能，移动端优化效果尤为明显。
 
 ## 7. flex:1 是哪些属性组成的
 
-flex 实际上是 flex-grow、flex-shrink 和 flex-basis 三个属性的缩写
+`flex` 实际上是 `flex-grow`、`flex-shrink` 和 `flex-basis` 三个属性的缩写
 
-flex-grow：定义项目的的放大比例；
+`flex-grow`：定义项目的的放大比例；
 
-默认为0，即 即使存在剩余空间，也不会放大；
+默认为`0`，即 即使存在剩余空间，也不会放大；
 
-所有项目的flex-grow为1：等分剩余空间（自动放大占位）；
-flex-grow为n的项目，占据的空间（放大的比例）是flex-grow为1的n倍。
+所有项目的`flex-grow`为1：等分剩余空间（自动放大占位）；
+`flex-grow`为`n`的项目，占据的空间（放大的比例）是`flex-grow`为`1`的`n`倍。
 
 
-flex-shrink：定义项目的缩小比例；
+`flex-shrink`：定义项目的缩小比例；
 
-默认为1，即 如果空间不足，该项目将缩小；
-所有项目的flex-shrink为1：当空间不足时，缩小的比例相同；
-flex-shrink为0：空间不足时，该项目不会缩小；
-flex-shrink为n的项目，空间不足时缩小的比例是flex-shrink为1的n倍。
+默认为`1`，即 如果空间不足，该项目将缩小；
+所有项目的`flex-shrink`为`1`：当空间不足时，缩小的比例相同；
+`flex-shrink`为`0`：空间不足时，该项目不会缩小；
+`flex-shrink`为`n`的项目，空间不足时缩小的比例是`flex-shrink`为`1`的`n`倍。
 
-flex-basis： 定义在分配多余空间之前，项目占据的主轴空间（main size），浏览器根据此属性计算主轴是否有多余空间
-默认值为auto，即 项目原本大小；
+`flex-basis`： 定义在分配多余空间之前，项目占据的主轴空间（`main size`），浏览器根据此属性计算主轴是否有多余空间
+默认值为`auto`，即 项目原本大小；
 设置后项目将占据固定空间。
 
 
 ## 8. 前端性能优化之css
 
-- CSS优化、提高性能的方法有哪些
-- 多个css合并，尽量减少HTTP请求
-- 将css文件放在页面最上面
-- 移除空的css规则
-- 避免使用CSS表达式
+CSS优化、提高性能的方法有哪些？
+
+- 多个`css`合并，尽量减少`HTTP`请求
+- 将`css`文件放在页面最上面
+- 移除空的`css`规则
+- 避免使用`CSS`表达式
 - 选择器优化嵌套，尽量避免层级过深
-- 充分利用css继承属性，减少代码量
+- 充分利用`css`继承属性，减少代码量
 - 抽象提取公共样式，减少代码量
 - 属性值为0时，不加单位
 - 属性值为小于1的小数时，省略小数点前面的0
-- 使用CSS Sprites将多张图片拼接成一张图片，通过CSS background 属性来访问图片内容
+- 使用`CSS Sprites`将多张图片拼接成一张图片，通过`CSS background` 属性来访问图片内容
 
 ## 9. 移除inline-block间隙
 
 - 移除空格
-- 使用margin负值
-- 使用font-size:0
-- letter-spacing
-- word-spacing
+- 使用`margin`负值
+- 使用`font-size:0`
+- `letter-spacing`
+- `word-spacing`
 
 
 ## 10. 清除浮动
@@ -169,7 +170,43 @@ flex-basis： 定义在分配多余空间之前，项目占据的主轴空间（
 ## 14. css动画
 [CSS动画简介](http://www.ruanyifeng.com/blog/2014/02/css_transition_and_animation.html)
 
-## 15.  display:none、visibility:hidden 和 opacity:0 之间的区别？
+## 15.  transition和animation的区别？
+
+1. animation 其实也叫关键帧，通过和 keyframe 结合可以设置中间帧的一个状态；transition 是过渡，是样式值的变化的过程，只有开始和结束；
+
+2. animation配合 @keyframe 可以不触发事件就触发这个过程，而 transition 需要通过 hover 或者 js 事件来配合触发；
+
+3. animation 可以设置很多的属性，比如循环次数，动画结束的状态等等，transition 只能触发一次；
+
+4. animation 可以结合 keyframe 设置每一帧，但是 transition 只有两帧；
+
+## 16. 说说requestAnimationFrame的作用，并实现获取每秒的帧数
+`requestAnimationFrame`： 告诉浏览器在下次重绘之前执行传入的回调函数(通常是操纵 dom，更新动画的函数)；由于是每帧执行一次，那结果就是每秒的执行次数与浏览器屏幕刷新次数一样，通常是每秒 60 次。
+
+```js
+let a = 0
+function step(timestamp) {
+  a++
+  element.style.transform = 'translateX(' + a + 'px)';      
+  if (a<100) { // 在100次调用后停止动画
+    window.requestAnimationFrame(step);
+  }
+}           
+window.requestAnimationFrame(step);
+```
+
+## 17. css实现一个正三角形
+```css
+ .triangle {
+      width: 50px;
+      height: 50px;
+      border-width: 50px;
+      border-style: solid;
+      border-color: red transition transition transition;
+ }
+```
+
+## 18.  display:none、visibility:hidden 和 opacity:0 之间的区别？
 
 这三者都是隐藏，但是具有以下不同点：
 - `display: none` 隐藏后不占位置， `visibility: hidden`、`opacity: 0` 隐藏后占位置、
