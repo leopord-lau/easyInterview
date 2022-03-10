@@ -34,7 +34,7 @@ http3.0 特性
 
 ## 3. https 加密过程是怎样的
 
-使用了对称加密可非对称加密的混合方式。
+使用了对称加密和非对称加密的混合方式。
 
 [HTTPS](https://juejin.cn/post/6844904150115827725)
 
@@ -69,6 +69,11 @@ If-Modified-Since: Thu, 20 Jun 2019 15:58:05 GMT
 - 减小cookie大小，尽量用localStorage代替
 - CDN托管静态文件
 - 开启 Gzip 压缩
+- dns预解析
+  ```html
+  <meta http-equiv="x-dns-prefetch-control" content="on" />
+  <link rel="dns-prefetch" href="http://xxx.com/" />
+  ```
 
 ## 6. 网络七层协议（OSI模型）
 
@@ -113,7 +118,151 @@ OSI参考模型并没有提供一个可以实现的方法，而是描述了一�
 
 
 ## 8.  TCP 协议四次挥手
+
+- Client端发起挥手请求，向Server端发送标志位是FIN报文段，设置序列号seq，此时，Client端进入FIN_WAIT_1状态，这表示Client端没有数据要发送给Server端了。
+- Server端收到了Client端发送的FIN报文段，向Client端返回一个标志位是ACK的报文段，ack设为seq加1，Client端进入FIN_WAIT_2状态，Server端告诉Client端，我确认并同意你的关闭请求。
+- Server端向Client端发送标志位是FIN的报文段，请求关闭连接，同时server端进入LAST_ACK状态。
+-  Client端收到Server端发送的FIN报文段，向Server端发送标志位是ACK的报文段，然后Client端进入TIME_WAIT状态。Server端收到Client端的ACK报文段以后，就关闭连接。此时，Client端等待2MSL的时间后依然没有收到回复，则证明Server端已正常关闭，那好，Client端也可以关闭连接了。
+
 为什么不是两次？
-两次情况客户端说完结束就立马断开不再接收，无法确认服务端是否接收到断开消息，但且服务端可能还有消息未发送完。
+两次情况客户端说完结束就立马断开不再接收，无法确认服务端是否接收到断开消息，并且服务端可能还有消息未发送完。
 为什么不是三次？
 3次情况服务端接收到断开消息，向客户端发送确认接受消息，客户端未给最后确认断开的回复。
+
+## 9. DNS解析是去哪找的缓存？
+
+1. 查找浏览器缓存
+2. 查找系统缓存
+3. 查找路由器的缓存
+4. 查找isp DNS缓存
+5. 递归搜索
+
+## 10. 怎么找到DNS服务器？
+
+递归迭代查询
+
+## 11. DNS怎么解析出IP的？
+
+1. 本地DNS服务器
+2. 根名称服务器
+3. 顶级名称服务器
+4. 二级名称服务器
+5. 权威名称服务器
+
+
+DNS解析查找
+
+> (1)本地 DNS服务器即将该请求转发到互联网上的根域（即一个完整域名最后面的那个点，通常省略不写）。  
+>(2)根域将所要查询域名中的顶级域（假设要查询ke.qq.com，该域名的顶级域就是com）的服务器IP地址返回到本地DNS。   
+> (3) 本地DNS根据返回的IP地址，再向顶级域（就是com域）发送请求。   
+> (4) com域服务器再将域名中的二级域（即ke.qq.com中的qq）的IP地址返回给本地DNS。   
+> (5) 本地DNS再向二级域发送请求进行查询。   
+> (6) 之后不断重复这样的过程，直到本地DNS服务器得到最终的查询结果，并返回到主机。这时候主机才能通过域名访问该网站。
+
+[用户在浏览器的地址栏中敲入了网站的网址 ，会发生哪些事情呢？](https://imweb.io/topic/55e3ba46771670e207a16bc8)
+
+## 12. 解析出ip地址后怎么找到对方？
+使用百度api接口
+
+
+## 13. 握手为什么要三次？万一第三次没有发出去呢？
+
+确保通讯双方的发送接收能力。
+
+第三次发送失败：
+
+**Server 端**
+
+第三次的ACK在网络中丢失，那么Server 端该TCP连接的状态为SYN_RECV,并且会根据 TCP的**超时重传机制**，会等待3秒、6秒、12秒后重新发送SYN+ACK包，以便Client重新发送ACK包。
+
+而Server重发SYN+ACK包的次数，可以通过设置/proc/sys/net/ipv4/tcp_synack_retries修改，默认值为5.
+
+如果重发指定次数之后，仍然未收到 client 的ACK应答，那么一段时间后，Server自动关闭这个连接。
+
+
+**Client 端**
+
+在linux c 中，client 一般是通过 connect() 函数来连接服务器的，而connect()是在 TCP的三次握手的第二次握手完成后就成功返回值。也就是说 client 在接收到 SYN+ACK包，它的TCP连接状态就为 established （已连接），表示该连接已经建立。那么如果 第三次握手中的ACK包丢失的情况下，Client认为这个连接已经建立， 向 server端发送数据，Server端将以 `RST`包响应，而是直接发送RST报文段，进入CLOSED状态。这样做的目的是为了防止SYN洪泛攻击。
+
+## 14. 说说https和http的区别
+
+http具有以下风险
+- 窃听风险（eavesdropping）：通信使用明文(不加密)，内容可能被窃听。
+
+- 篡改风险（tampering）：无法证明报文的完整性，所以可能遭篡改
+
+- 冒充风险（pretending）：不验证通信方的身份，因此有可能遭遇伪装
+
+- HTTP 是明文传输协议，HTTPS 协议是由 SSL+HTTP 协议构建的可进行加密传输、身份认证的网络协议，比 HTTP 协议安全。
+- HTTPS比HTTP更加安全，对搜索引擎更友好，利于SEO,谷歌、百度优先索引HTTPS网页;
+- HTTPS需要用到SSL证书，而HTTP不用;
+- HTTPS标准端口443，HTTP标准端口80;
+- HTTPS在浏览器显示绿色安全锁，HTTP没有显示;
+- http是无状态的
+
+## 15. 证书颁发的流程
+
+## 16. 常用请求头、响应头
+
+**请求头：**
+
+- Accept：浏览器可接受的MIME类型；
+
+- Accept-Charset：浏览器可接受的字符集；
+
+- Accept-Encoding：浏览器能够进行解码的数据编码方式，比如gzip。Servlet能够向支持gzip的浏览器返回经gzip编码的HTML页面。许多情形下这可以减少5到10倍的下载时间；
+
+- Accept-Language：浏览器所希望的语言种类，当服务器能够提供一种以上的语言版本时要用到；
+
+- Authorization：授权信息，通常出现在对服务器发送的WWW-Authenticate头的应答中；
+
+- Connection：表示是否需要持久连接。如果Servlet看到这里的值为“Keep-Alive”，或者看到请求使用的是HTTP 1.1（HTTP 1.1默认进行持久连接），它就可以利用持久连接的优点，当页面包含多个元素时（例如Applet，图片），显著地减少下载所需要的时间。要实现这一点，Servlet需要在应答中发送一个Content-Length头，最简单的实现方法是：先把内容写入ByteArrayOutputStream，然后在正式写出内容之前计算它的大小；
+
+- Content-Length：表示请求消息正文的长度；
+
+- Cookie：这是最重要的请求头信息之一；
+
+- From：请求发送者的email地址，由一些特殊的Web客户程序使用，浏览器不会用到它；
+
+- Host：初始URL中的主机和端口；
+
+- If-Modified-Since：只有当所请求的内容在指定的日期之后又经过修改才返回它，否则返回304“Not Modified”应答；
+
+- Pragma：指定“no-cache”值表示服务器必须返回一个刷新后的文档，即使它是代理服务器而且已经有了页面的本地拷贝；
+
+- Referer：包含一个URL，用户从该URL代表的页面出发访问当前请求的页面。
+
+- User-Agent：浏览器类型，如果Servlet返回的内容与浏览器类型有关则该值非常有用；
+
+- UA-Pixels，UA-Color，UA-OS，UA-CPU：由某些版本的IE浏览器所发送的非标准的请求头，表示屏幕大小、颜色深度、操作系统和CPU类型。
+
+**响应头：**
+
+- Allow：服务器支持哪些请求方法（如GET、POST等）；
+
+- Content-Encoding：文档的编码（Encode）方法。只有在解码之后才可以得到Content-Type头指定的内容类型。利用gzip压缩文档能够显著地减少HTML文档的下载时间。Java的GZIPOutputStream可以很方便地进行gzip压缩，但只有Unix上的Netscape和Windows上的IE 4、IE 5才支持它。因此，Servlet应该通过查看Accept-Encoding头（即request.getHeader("Accept-Encoding")）检查浏览器是否支持gzip，为支持gzip的浏览器返回经gzip压缩的HTML页面，为其他浏览器返回普通页面；
+
+- Content-Length：表示内容长度。只有当浏览器使用持久HTTP连接时才需要这个数据。如果你想要利用持久连接的优势，可以把输出文档写入ByteArrayOutputStram，完成后查看其大小，然后把该值放入Content-Length头，最后通过byteArrayStream.writeTo(response.getOutputStream()发送内容；
+
+- Content-Type： 表示后面的文档属于什么MIME类型。Servlet默认为text/plain，但通常需要显式地指定为text/html。由于经常要设置Content-Type，因此HttpServletResponse提供了一个专用的方法setContentTyep。 可在web.xml文件中配置扩展名和MIME类型的对应关系；
+
+- Date：当前的GMT时间。你可以用setDateHeader来设置这个头以避免转换时间格式的麻烦；
+
+- Expires：指明应该在什么时候认为文档已经过期，从而不再缓存它。
+
+- Last-Modified：文档的最后改动时间。客户可以通过If-Modified-Since请求头提供一个日期，该请求将被视为一个条件GET，只有改动时间迟于指定时间的文档才会返回，否则返回一个304（Not Modified）状态。Last-Modified也可用setDateHeader方法来设置；
+
+- Location：表示客户应当到哪里去提取文档。Location通常不是直接设置的，而是通过HttpServletResponse的sendRedirect方法，该方法同时设置状态代码为302；
+
+- Refresh：表示浏览器应该在多少时间之后刷新文档，以秒计。
+
+- set-cookie: 设置cookie
+
+- etag: 文件hash值
+
+
+## 17. 线程和进程
+
+进程：指在系统中正在运行的一个应用程序；程序一旦运行就是进程；进程——资源分配的最小单位。
+
+线程：系统分配处理器时间资源的基本单元，或者说进程之内独立执行的一个单元执行流。线程——程序执行的最小单位。
