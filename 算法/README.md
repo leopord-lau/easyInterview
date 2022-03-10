@@ -313,3 +313,40 @@ const testArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 const resArr = getTenNum(testArray, 14);
 
 ```
+
+
+## 根据url字符串解析出参数
+
+使用正则获取key对应的参数：
+```js
+function getParams(name) {
+  const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+  let result = window.location.search.substr(1).match(reg);
+  console.log(result);
+  if(result!==null) return unescape(result[2]);
+  return null;
+}
+```
+
+使用循环遍历出所有参数：
+```js
+function GetRequest() {
+    var url = location.search; //获取url中"?"符后的字串
+    var theRequest = new Object();
+    if (url.indexOf("?") != -1) {
+        var str = url.substr(1);
+        strs = str.split("&");
+        console.log(strs)
+        for(var i = 0; i < strs.length; i ++) {
+            theRequest[strs[i].split("=")[0]] = unescape(strs[i].split("=")[1]);
+        }
+    }
+    return theRequest;
+}
+```
+
+## leetcode原题
+
+[93. 复原 IP 地址](https://leetcode-cn.com/problems/restore-ip-addresses/)
+
+[21. 合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists)
