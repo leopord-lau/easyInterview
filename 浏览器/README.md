@@ -177,3 +177,43 @@ new Promise(function (resolve) {
 9. 图片懒加载减少占用网络带宽
 10. 页面使用骨架屏
 11. 利用好script标签的async和defer这两个属性。功能独立且不要求马上执行的js文件，可以加入async属性。如果是优先级低且没有依赖的js，可以加入defer属性。
+
+
+## 10. 说说浏览器的消息循环机制
+
+在JavaScript中，任务被分为两种，一种宏任务（MacroTask）也叫Task，一种叫微任务（MicroTask）。
+
+MacroTask（宏任务）
+script全部代码、setTimeout、setInterval、setImmediate（浏览器暂时不支持，只有IE10支持，具体可见MDN）、I/O、UI Rendering。
+
+MicroTask（微任务）
+Process.nextTick（Node独有）、Promise、Object.observe(废弃)、MutationObserver
+
+事件循环的进程模型
+
+- 选择当前要执行的任务队列，选择任务队列中最先进入的任务，如果任务队列为空即null，则执行跳转到微任务（MicroTask）的执行步骤。
+- 将事件循环中的任务设置为已选择任务。
+- 执行任务。
+- 将事件循环中当前运行任务设置为null。
+- 将已经运行完成的任务从任务队列中删除。
+- microtasks步骤：进入microtask检查点。
+- 更新界面渲染。
+- 返回第一步。
+
+
+## 11. 浏览器的控制台是怎么渲染的？说说在浏览器控制台输出console到输出显示的过程
+
+## 12. 单页和多页应用怎么通讯
+
+websocket
+
+## 13. 如何防范iframe被钓鱼网站嵌套导致的安全问题
+iframe如何判断是否被嵌套?
+```js
+window.self === window.top
+```
+
+
+## 14. 模块化
+
+CommonJs: node.js的模块系统，就是参照CommonJS规范实现的。在CommonJS中，有一个全局性方法require()，用于加载模块
