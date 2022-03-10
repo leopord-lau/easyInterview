@@ -20,22 +20,239 @@
 
 [深度解锁Webpack系列](https://juejin.cn/post/6844904093463347208)
 
+`speed-measure-webpack-plugin`来查看各个插件及loader的耗时，进行针对性的优化。
+
+`webpack-bundle-analyzer`查看哪些包体积较大。
+
+### 1. exclude / include
+通过 exclude、include 配置来确保转译尽可能少的文件。
+
+### 2. cache-loader
+一些性能开销较大的 `loader` 之前添加 `cache-loader`，将结果缓存中磁盘中。默认保存在 `node_modueles/.cache/cache-loader` 目录下
+
+如果只打算给 `babel-loader` 配置 `cache` 的话，也可以不使用 `cache-loader`，给 `babel-loader` 增加选项 `cacheDirectory`。
+
+### 3. happypack
+由于有大量文件需要解析和处理，构建是文件读写和计算密集型的操作，特别是当文件数量变多后，Webpack 构建慢的问题会显得严重。
+
+HappyPack把任务分解给多个子进程去并发的执行，子进程处理完后再把结果发送给主进程。
+
+happypack 默认开启 CPU核数 - 1 个进程
+
+```js
+module: {
+        rules: [
+            {
+                test: /\.js[x]?$/,
+                use: 'Happypack/loader?id=js',
+                include: [path.resolve(__dirname, 'src')]
+            },
+            {
+                test: /\.css$/,
+                use: 'Happypack/loader?id=css',
+                include: [
+                    path.resolve(__dirname, 'src'),
+                    path.resolve(__dirname, 'node_modules', 'bootstrap', 'dist')
+                ]
+            }
+        ]
+    },
+    plugins: [
+        new Happypack({
+            id: 'js', //和rule中的id=js对应
+            //将之前 rule 中的 loader 在此配置
+            use: ['babel-loader'] //必须是数组
+        }),
+        new Happypack({
+            id: 'css',//和rule中的id=css对应
+            use: ['style-loader', 'css-loader','postcss-loader'],
+        })
+    ]
+```
+
+### 4. thread-loader
+
+除了使用 Happypack 外，我们也可以使用 thread-loader ，把 thread-loader 放置在其它 loader 之前，那么放置在这个 loader 之后的 loader 就会在一个单独的 worker 池中运行。
+在 worker 池(worker pool)中运行的 loader 是受到限制的。例如：
+
+- 这些 loader 不能产生新的文件。
+- 这些 loader 不能使用定制的 loader API（也就是说，通过插件）。
+- 这些 loader 无法获取 webpack 的选项设置。
+
+
+### 5. 开启 JS 多进程压缩
+
+当前 Webpack 默认使用的是 TerserWebpackPlugin，默认就开启了多进程和缓存，构建时，你的项目中可以看到 terser 的缓存文件 node_modules/.cache/terser-webpack-plugin。
+
+```js
+optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
+  },
+```
+
+### 6. HardSourceWebpackPlugin
+
+```js
+plugins: [
+  	...
+    // 缓存 加速二次构建速度
+    new HardSourceWebpackPlugin({
+      // Either an absolute path or relative to webpack's options.context.
+      //  cacheDirectory是在高速缓存写入 ，设置缓存在磁盘中存放的路径
+      cacheDirectory: './../disk/.cache/hard-source/[confighash]',
+      // Either a string of object hash function given a webpack config.
+      recordsPath: './../disk/.cache/hard-source/[confighash]/records.json',
+      //configHash在启动webpack实例时转换webpack配置，并用于cacheDirectory为不同的webpack配置构建不同的缓存
+      configHash: function (webpackConfig) {
+        // node-object-hash on npm can be used to build this.
+        return require('node-object-hash')({ sort: false }).hash(webpackConfig);
+      },
+      // Either false, a string, an object, or a project hashing function.
+      environmentHash: {
+        root: process.cwd(),
+        directories: [],
+        files: ['./../package-lock.json', './../yarn.lock'],
+      },
+      // An object.
+      info: {
+        // 'none' or 'test'.
+        mode: 'none',
+        // 'debug', 'log', 'info', 'warn', or 'error'.
+        level: 'debug',
+      },
+      // Clean up large, old caches automatically.
+      cachePrune: {
+        // Caches younger than `maxAge` are not considered for deletion. They must
+        // be at least this (default: 2 days) old in milliseconds.
+        maxAge: 2 * 24 * 60 * 60 * 1000,
+        // All caches together must be larger than `sizeThreshold` before any
+        // caches will be deleted. Together they must be at least this
+        // (default: 50 MB) big in bytes.
+        sizeThreshold: 100 * 1024 * 1024
+      },
+   }),
+ ]
+```
+
+### 7. noParse
+如果一些第三方模块没有AMD/CommonJS规范版本，可以使用 noParse 来标识这个模块，这样 Webpack 会引入这些模块，但是不进行转化和解析，从而提升 Webpack 的构建性能 ，例如：jquery 、lodash。
+
+noParse 属性的值是一个正则表达式或者是一个 function。
+```js
+module.exports = {
+    //...
+    module: {
+        noParse: /jquery|lodash/
+    }
+}
+```
+
+### 8. IgnorePlugin
+webpack 的内置插件，作用是忽略第三方包指定目录。
+
+### 9. externals
+我们可以将一些JS文件存储在 CDN 上(减少 Webpack打包出来的 js 体积)，在 index.html 中通过 `<script>` 标签引入
+
+### 10. 抽离公共代码
+
+抽离公共代码是对于多页应用来说的，如果多个页面引入了一些公共模块，那么可以把这些公共的模块抽离出来，单独打包。公共代码只需要下载一次就缓存起来了，避免了重复下载。
+
+```js
+module.exports = {
+    optimization: {
+        splitChunks: {//分割代码块
+            cacheGroups: {
+                vendor: {
+                    //第三方依赖
+                    priority: 1, //设置优先级，首先抽离第三方模块
+                    name: 'vendor',
+                    test: /node_modules/,
+                    chunks: 'initial',
+                    minSize: 0,
+                    minChunks: 1 //最少引入了1次
+                },
+                //缓存组
+                common: {
+                    //公共模块
+                    chunks: 'initial',
+                    name: 'common',
+                    minSize: 100, //大小超过100个字节
+                    minChunks: 3 //最少引入了3次
+                }
+            }
+        }
+    }
+}
+```
+
 ## 3. 打包加速方法
+同上
 
-- devtool 的 sourceMap较为耗时
-- 开发环境不做无意义的操作：代码压缩、目录内容清理、计算文件hash、提取CSS文件等
-- 第三方依赖外链script引入：vue、ui组件、JQuery等
-- HotModuleReplacementPlugin：热更新增量构建
-- DllPlugin& DllReferencePlugin：动态链接库，提高打包效率，仅打包一次第三方模块，每次构建只重新打包业务代码。
-- thread-loader,happypack：多线程编译，加快编译速度
-- noParse：不需要解析某些模块的依赖
-- babel-loader开启缓存cache
-- splitChunks（老版本用CommonsChunkPlugin）：提取公共模块，将符合引用次数(minChunks)的模块打包到一起，利用浏览器缓存
-- Tree Shaking 摇树：基于ES6提供的模块系统对代码进行静态分析, 并在压缩阶段将代码中的死代码（dead code)移除，减少代码体积。
+## 4. loader、plugin原理
+loader本质上就是一个函数，会读取文件内容并进行一些操作。
+```js
+module.exports = function (source) {
+ console.log('source>>>>', source)
+ return source
+}
+```
 
-## 4. 打包体积优化
+plugin实际是一个类（构造函数），通过在plugins配置中实例化进行调用
+```js
+function MyExampleWebpackPlugin() {
+  
+};
+// 在插件函数的prototype上定义一个 apply 方法
+MyExampleWebpackPlugin.prototype.apply = function(compiler) {
+  // 指定一个挂载到webpack自身的事件钩子。
+  compiler.plugin('webpacksEventHook', function(compilation, callback) {
+    console.log('这是一个插件demo');
 
-- webpack-bundle-analyzer插件可以可视化的查看webpack打包出来的各个文件体积大小，以便我们定位大文件，进行体积优化
+    // 功能完成后调用 webpack 提供的回调
+    callback();
+  })
+}
+
+// 导出plugin
+module.exports = MyExampleWebpackPlugin;
+```
+`apply`方法给插件传递compiler对象。插件实列获取该compiler对象后，就可以通过 compiler.plugin('事件名称', '回调函数'); 监听到webpack广播出来的事件.
+
+## 5. module、chunk、bundle、asset的区别
+
+- module：只要是文件，都是一个module
+- chunk：代码块，是webpack根据功能拆分出来的，如：entry、import() 、splitChunk
+- bundle：webpack打包之后的各个文件，一般就是和chunk是一对一的关系，bundle就是对chunk进行编译压缩打包等处理之后的产出。
+- assets： 项目中被引用的资源，通常为各种格式的图片和字体文件
+
+## 6. chunk一定是通过入口生成的吗
+
+不是
+
+可以在optimization中配置生成
+```js
+optimization: {
+    splitChunks: {
+      chunks: 'all'
+    }
+  },
+```
+import 也行
+
+## 7. css-loader的作用
+处理依赖关系
+
+## 8. css中的路径是如何解析的
+
+## 9. css-loader和file-loader如何一起工作
+
+1. 看css-loader的包介绍，意思是把@import 和 url() 这种方式的转换成import/require()方式
+2. 看File Loader的介绍，他是返回对应文件的publicUrl
+
+## 10. 打包体积优化
+
+- `webpack-bundle-analyzer`插件可以可视化的查看webpack打包出来的各个文件体积大小，以便我们定位大文件，进行体积优化
 - 提取第三方库或通过引用外部文件的方式引入第三方库
 - 代码压缩插件UglifyJsPlugin
 - 服务器启用gzip压缩
