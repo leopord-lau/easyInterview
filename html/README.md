@@ -65,7 +65,7 @@ viewport
 局部处理
 
 meta标签中的 viewport属性 ，initial-scale 设置为 1
-rem按照设计稿标准走，外加利用transfrome 的scale(0.5) 缩小一倍即可；
+rem按照设计稿标准走，外加利用transfrom 的scale(0.5) 缩小一倍即可；
 全局处理
 mate标签中的 viewport属性 ，initial-scale 设置为 0.5
 rem 按照设计稿标准走即可
