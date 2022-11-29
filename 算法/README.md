@@ -315,7 +315,7 @@ const resArr = getTenNum(testArray, 14);
 ```
 
 
-## 根据url字符串解析出参数
+## 6. 根据url字符串解析出参数
 
 使用正则获取key对应的参数：
 ```js
@@ -344,6 +344,17 @@ function GetRequest() {
     return theRequest;
 }
 ```
+
+## 7. 数值转千分位
+```js
+function format(num) {
+  return (num + '').replace(/\d{1,3}(?=(\d{3})+$)/g, '$&,')
+}
+```
+
+- 正则表达式 \d{1,3}(?=(\d{3})+$)  表示前面有1~3个数字，后面的至少由一组3个数字结尾
+- ?=表示正向引用，可以作为匹配的条件，但匹配到的内容不获取，并且作为下一次查询的开始
+- $& 表示与正则表达式相匹配的内容
 
 ## leetcode原题
 

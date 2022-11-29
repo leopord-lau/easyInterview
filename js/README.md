@@ -182,6 +182,7 @@ function createObject() {
   const result = Constructor.apply(obj, arguments);
   return typeof result === 'obj' ? result : obj;
 }
+
 ```
 
 
@@ -552,3 +553,47 @@ promise -> for -> promise2 -> console -> resolve1 -> resolve3 -> resolve2 -> set
   - 批量绑定事件，使用事件委托绑定父节点实现，利用了事件冒泡的特性
   - 如果可以使用innerHTML代替appendChild
   - 在 DOM 操作时添加样式时尽量增加 class 属性，而不是通过 style 操作样式，以减少重排（Reflow）
+
+
+## 23. 判断输入输出
+
+```js
+function T1() {
+ this.name = 't1';
+ this.age = 19;
+}
+
+function T2() {
+ this.name = 't2';
+ this.age = 19;
+ return 19;  
+}
+
+function T3() {
+ this.name = 't3';
+ this.age = 19;
+ return {
+   name: 't',
+   age: 20
+ };  
+}
+
+function T4() {
+ this.name = 't4';
+ this.age = 19;
+}
+
+console.log(new T1()); // {name:'t1',age:19}
+console.log(new T2()); // {name:'t1',age:19}
+console.log(new T3()); // {name:'t',age: 20}
+
+T4.prototype = new T1();
+T4.prototype.type = 'expert';
+
+const t4 = new T4();
+console.log(t4); //  {name:'t4',age:19}
+console.log(t4.type); // expert
+console.log(t4 instanceof T1); // true
+console.log(t4 instanceof T2); // false
+console.log(t4 instanceof T4); // true
+```
